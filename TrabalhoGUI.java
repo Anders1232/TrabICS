@@ -29,7 +29,7 @@ public class TrabalhoGUI extends JFrame
 	
 	ImageIcon frameIcon = new ImageIcon("img/frameicon.png");
 	
-	Color corFundo = new Color(33, 39, 52);
+	Color corFundo = new Color(5, 5, 5);
 	Color corTexto = new Color(220, 222, 224);
 	Color corTexto2 = new Color(142, 145, 151);
 	Color corAzul = new Color(40, 102, 213);
@@ -45,29 +45,39 @@ public class TrabalhoGUI extends JFrame
     	PanelPersonalizado panelConteudo = new PanelPersonalizado();
     	GroupLayout layout = new GroupLayout(panelConteudo);
 
-    	JPanel panelTopoEsq = new JPanel();
-    	JPanel panelTopoDir = new JPanel();
+    	JPanel panelTopo = new JPanel();
         JPanel panelCentro = new JPanel();
+        JPanel panelCentroDir = new JPanel();
+        JPanel panelProgresso = new JPanel();
         JPanel panelRodape = new JPanel();
          
         //---------------------
         // Painel Topo Esquerdo 
         //---------------------
-        panelTopoEsq.setPreferredSize(new Dimension (300, 150));
-        panelTopoEsq.setOpaque(false);
+        panelTopo.setPreferredSize(new Dimension (400, 80));
+        panelTopo.setOpaque(false);
         
         JLabel nomeArquivo = new JLabel("Titulo do Arquivo MIDI");
         nomeArquivo.setForeground(corTexto);
-        nomeArquivo.setHorizontalAlignment(SwingConstants.LEFT);
         nomeArquivo.setPreferredSize(new Dimension (300, 25));
         nomeArquivo.setFont(arial);
         
         JLabel nomeArquivo2 = new JLabel("Titulo da Orquestra SF2");
         nomeArquivo2.setForeground(corTexto2);
-        nomeArquivo2.setHorizontalAlignment(SwingConstants.LEFT);
         nomeArquivo2.setPreferredSize(new Dimension (300, 20));
         nomeArquivo2.setFont(arialNarrow);
 
+        panelTopo.add(nomeArquivo);
+        panelTopo.add(nomeArquivo2);
+        
+        panelTopo.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        //--------------------
+        // Painel Centro
+        //-------------------- 
+        panelCentro.setPreferredSize(new Dimension (250, 70));
+        panelCentro.setOpaque(false);
+        
         JButton botaoStop = new JButton(stopIcon);
         botaoStop.setContentAreaFilled(false);
         botaoStop.setBorderPainted(false);
@@ -125,70 +135,70 @@ public class TrabalhoGUI extends JFrame
             }
         });
         
+        panelCentro.add(botaoPause);
+        panelCentro.add(botaoPlay);
+        panelCentro.add(botaoStop);
+        
+        panelCentro.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
+      
+        
+        //----------------------
+        // Painel Centro Direita
+        //----------------------
+        panelCentroDir.setPreferredSize(new Dimension (150, 70));
+        panelCentroDir.setOpaque(false);
+        
         JSlider sliderVolume = new JSlider(JSlider.HORIZONTAL,0, 127, 50); 
-        sliderVolume.setUI(new mySliderUI(sliderVolume));
-        sliderVolume.setPreferredSize(new Dimension(100, 25));
-        sliderVolume.setOpaque(false);
+        //sliderVolume.setUI(new mySliderUI(sliderVolume));
+        sliderVolume.setPreferredSize(new Dimension(120, 25));
+        sliderVolume.setOpaque(true);
         sliderVolume.setForeground(corAzul);
+        sliderVolume.setBackground(corFundo);
         
+        JLabel volume = new JLabel("50%");
+        volume.setPreferredSize(new Dimension(30, 25));
+        volume.setOpaque(true);
+        volume.setForeground(corTexto);
+        volume.setBackground(corFundo);
         
-        panelTopoEsq.add(nomeArquivo);
-        panelTopoEsq.add(nomeArquivo2);
-        panelTopoEsq.add(botaoStop);
-        panelTopoEsq.add(botaoPlay);
-        panelTopoEsq.add(botaoPause);
-        panelTopoEsq.add(sliderVolume);
+        panelCentroDir.add(sliderVolume);
+        panelCentroDir.add(volume);
         
-        panelTopoEsq.setLayout(new FlowLayout(FlowLayout.LEFT));
-        
+        panelCentroDir.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 15));
+
         //--------------------
-        // Painel Topo Direito
-        //--------------------
-        panelTopoDir.setPreferredSize(new Dimension (100, 100));
-        panelTopoDir.setOpaque(false);
-        
-        JButton gramButton = new JButton(gramophone);
-        gramButton.setContentAreaFilled(false);
-        gramButton.setBorderPainted(false);
-        gramButton.setPreferredSize(new Dimension (100, 120));
-        
-        //panelTopoDir.add(gramButton);
-        
-        //--------------------
-        // Painel Centro
+        // Painel Progresso
         //-------------------- 
-        panelCentro.setPreferredSize(new Dimension (400, 50));
-        panelCentro.setOpaque(false);
+        panelProgresso.setPreferredSize(new Dimension (400, 50));
+        panelProgresso.setOpaque(false);
         
         JLabel tempoTotal = new JLabel("00:00");
         JLabel tempoCorrente = new JLabel("00:00");
-        
         tempoTotal.setForeground(corTexto);
         tempoCorrente.setForeground(corTexto);
         
         JProgressBar progresso = new JProgressBar(0);
         progresso.setPreferredSize(new Dimension(300,12));
-        progresso.setBackground(new Color(5, 5, 5));
+        progresso.setBackground(corFundo);
         progresso.setForeground(corAzul);
         progresso.setBorderPainted(false);
         progresso.setBorder(BorderFactory.createEmptyBorder());
         progresso.setValue(10);        
         progresso.setStringPainted(false);
         
-        panelCentro.add(tempoTotal);
-        panelCentro.add(progresso);
-        panelCentro.add(tempoCorrente);
-        
+        panelProgresso.add(tempoTotal);
+        panelProgresso.add(progresso);
+        panelProgresso.add(tempoCorrente);
         
         //--------------
         // Painel Rodape
         //--------------
-        panelRodape.setPreferredSize(new Dimension (400, 100));
+        panelRodape.setPreferredSize(new Dimension (400, 150));
         panelRodape.setOpaque(false);
         
         JTextField caminhoTextField = new JTextField("  Escolha um arquivo MIDI...");
         caminhoTextField.setEditable(false);
-        caminhoTextField.setBackground(new Color(5, 5, 5));
+        caminhoTextField.setBackground(corFundo);
         caminhoTextField.setForeground(corTexto);
         caminhoTextField.setBorder(BorderFactory.createEmptyBorder());
         caminhoTextField.setPreferredSize(new Dimension(300, 25));   
@@ -204,7 +214,7 @@ public class TrabalhoGUI extends JFrame
         
         JTextField caminhoTextField2 = new JTextField("  Escolha um arquivo SF2...");
         caminhoTextField2.setEditable(false);
-        caminhoTextField2.setBackground(new Color(5, 5, 5));
+        caminhoTextField2.setBackground(corFundo);
         caminhoTextField2.setForeground(corTexto);
         caminhoTextField2.setBorder(BorderFactory.createEmptyBorder());
         caminhoTextField2.setPreferredSize(new Dimension(300, 25));   
@@ -223,24 +233,27 @@ public class TrabalhoGUI extends JFrame
         panelRodape.add(botaoAbrir);      
         panelRodape.add(caminhoTextField2); 
         panelRodape.add(botaoAbrir2);
+        
+        panelRodape.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
           
-
+        //---------
+        // Layout
+        //---------
         layout.setVerticalGroup(layout.createParallelGroup()
-        		.addComponent(panelTopoEsq)
-        		.addComponent(panelTopoDir));
+        		.addComponent(panelTopo));
+        
+        layout.setVerticalGroup(layout.createParallelGroup()
+        		.addComponent(panelCentro)
+        		.addComponent(panelCentroDir));
         
         layout.setHorizontalGroup(layout.createSequentialGroup()
-        		.addComponent(panelCentro)
+        		.addComponent(panelProgresso)
         		.addComponent(panelRodape));
         
         
-        //panelConteudo.add(panelTopoEsq);
-        
-        //panelConteudo.add(panelTopoDir);
-        //panelConteudo.add(panelTopoEsq2);
-       // panelConteudo.add(panelCentro);
-        //panelConteudo.add(panelRodape);
-        
+        //------------------
+        // Settings do Frame
+        //------------------
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setPreferredSize(new Dimension (450, 350));
         frame.setResizable(false);
