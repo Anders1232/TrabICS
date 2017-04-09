@@ -24,6 +24,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.filechooser.FileFilter;
 
+import javax.sound.midi.Track;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.Soundbank;
@@ -31,6 +32,8 @@ import javax.sound.midi.Synthesizer;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.InvalidMidiDataException;
 
@@ -64,11 +67,11 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 	Color corTexto2 = new Color(142, 145, 151);
 	Color corAzul   = new Color(40, 102, 213);
 
-	Font arial       = new Font("Arial", java.awt.Font.PLAIN, 25);
+	Font arial       = new Font("Gill Sans", java.awt.Font.PLAIN, 25);
 	Font arialNarrow = new Font("Arial Narrow", java.awt.Font.ITALIC, 18);
 
     JLabel nomeArquivo   = new JLabel("Titulo do Arquivo MIDI");
-    JLabel nomeArquivo2  = new JLabel("Titulo da Orquestra SF2");
+    JLabel nomeArquivo2  = new JLabel("Orquestra Padrao");
     JLabel volumeLabel       = new JLabel("", SwingConstants.CENTER);
     JLabel tempoTotal    = new JLabel("00:00:00");
     JLabel tempoCorrente = new JLabel("00:00:00");
@@ -104,6 +107,8 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 
     String  caminhoMIDI;
     String  caminhoSF2;
+
+    
 
     //-----------------------------------------------
     // Classe que Define um panel com imagem de fundo
@@ -361,6 +366,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         frame.paintComponents(this.getGraphics());
         frame.pack();
         frame.setVisible(true);
+
     }
  
     //-------------------------------------------------
@@ -411,99 +417,44 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     parar();
                 }
             }); 
-  
+
+            botaoBackward.addActionListener(new ActionListener(){ 
+                public void actionPerformed(ActionEvent e){ 
+                    retroceder();
+                }
+            }); 
+
+            botaoFoward.addActionListener(new ActionListener(){ 
+                public void actionPerformed(ActionEvent e){ 
+                    avancar();
+                }
+            }); 
+
             botaoMenos.addActionListener(new ActionListener(){ 
                 public void actionPerformed(ActionEvent e){ 
-                    if(volumeAtual > 0){
-                        
-                        volumeAtual--;
-                        
-                        for(int i=0; i<16; i++){
-                            try { 
-                                mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
-                                receptor.send(mudancaVolume, -1);
-                            } catch (InvalidMidiDataException e1) {}
-                        }
-                        volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
-                        if(volumeAtual == 0){
-                            botaoMenos.setEnabled(false);
-                        }
-                        if(volumeAtual < 127){
-                            botaoMais.setEnabled(true);   
-                        }
-                    }
+                    diminuiVolume(0);
                 }
             });
 
             botaoMenos.addMouseListener(new MouseAdapter(){
                 public void mousePressed(MouseEvent evt) {
                     if(evt.getClickCount() >= 2){
-                        if(volumeAtual > 4){
-                        
-                            volumeAtual-=5;
-                            
-                            for(int i=0; i<16; i++){
-                                try { 
-                                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
-                                    receptor.send(mudancaVolume, -1);
-                                } catch (InvalidMidiDataException e1) {}
-                            }
-                            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
-                            if(volumeAtual == 0){
-                                botaoMenos.setEnabled(false);
-                            }
-                            if(volumeAtual < 127){
-                                botaoMais.setEnabled(true);   
-                            }
-                        }
+                        diminuiVolume(1);
                     }
                 }
             });
 
             botaoMais.addActionListener(new ActionListener(){ 
                 public void actionPerformed(ActionEvent e){ 
-                    if(volumeAtual < 127){
-                        
-                        volumeAtual++;
-                        
-                        for(int i=0; i<16; i++){
-                            try { 
-                                mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
-                                receptor.send(mudancaVolume, -1);
-                            } catch (InvalidMidiDataException e1) {}
-                        }
-                        volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
-                        if(volumeAtual == 127){
-                            botaoMais.setEnabled(false);
-                        }
-                        if(volumeAtual > 0){
-                            botaoMenos.setEnabled(true);
-                        }
-                    }
+                    aumentaVolume(0);
                 }
             });  
 
             botaoMais.addMouseListener(new MouseAdapter(){
                 public void mousePressed(MouseEvent evt) {
                     if(evt.getClickCount() >= 2){
-                        if(volumeAtual < 123){
+                        aumentaVolume(0);
                         
-                            volumeAtual+=5;
-                            
-                            for(int i=0; i<16; i++){
-                                try { 
-                                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
-                                    receptor.send(mudancaVolume, -1);
-                                } catch (InvalidMidiDataException e1) {}
-                            }
-                            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
-                            if(volumeAtual == 127){
-                                botaoMais.setEnabled(false);
-                            }
-                            if(volumeAtual > 0){
-                                botaoMenos.setEnabled(true);
-                            }
-                        }
                     }
                 }
             }); 
@@ -551,10 +502,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
               
             Sequence sequeciaNova = MidiSystem.getSequence(arqSeqNovo);           
             double duracao = sequeciaNova.getMicrosecondLength()/1000000.0d;
-            
-            // if(caminhoSF2 != ""){
-            //     carregarBanco(caminhoSF2); 
-            // }         
 
             nomeArquivo.setText(arqSeqNovo.getName());                
             tempoTotal.setText(formataInstante(duracao));  
@@ -620,7 +567,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         }
     }
 
-    public void carregarBanco(String caminhoSF2) {         
+    public void carregarBanco(String caminhoSF2) {
         try { 
             sintetizador = MidiSystem.getSynthesizer();
             sintetizador.open();
@@ -647,7 +594,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         }catch (Exception e) { System.out.println("Erro no carregamento do banco: "+ e); }              
     }
 
-    public void tocar(String caminho, long inicio) {  
+    public void tocar(String caminho, long inicio) {
         try {  
             
             File arquivoMIDI = new File(caminho);
@@ -725,6 +672,104 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         progresso.setValue(0);             
         tempoCorrente.setText(formataInstante(0));      
     }
+
+    public void diminuiVolume(int duploClique){
+
+        if((volumeAtual > 0) && (duploClique == 0)){
+            volumeAtual--;
+            for(int i=0; i<16; i++){
+                try { 
+                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
+                    receptor.send(mudancaVolume, -1);
+                } catch (InvalidMidiDataException e1) {}
+            }
+            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
+            if(volumeAtual == 0){
+                botaoMenos.setEnabled(false);
+            }
+            if(volumeAtual < 127){
+                botaoMais.setEnabled(true);   
+            }
+        }
+
+        if((volumeAtual > 4) && (duploClique == 1)){        
+            volumeAtual-=5;
+            for(int i=0; i<16; i++){
+                try { 
+                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
+                    receptor.send(mudancaVolume, -1);
+                } catch (InvalidMidiDataException e1) {}
+            }
+            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
+            if(volumeAtual == 0){
+                botaoMenos.setEnabled(false);
+            }
+            if(volumeAtual < 127){
+                botaoMais.setEnabled(true);   
+            }
+        }
+    }
+
+    public void aumentaVolume(int duploClique){
+
+        if((volumeAtual < 127) && (duploClique == 0)){         
+            volumeAtual++;
+            for(int i=0; i<16; i++){
+                try { 
+                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
+                    receptor.send(mudancaVolume, -1);
+                } catch (InvalidMidiDataException e1) {}
+            }
+            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
+            if(volumeAtual == 127){
+                botaoMais.setEnabled(false);
+            }
+            if(volumeAtual > 0){
+                botaoMenos.setEnabled(true);
+            }
+        }
+        if((volumeAtual < 123) && (duploClique == 1)){    
+            volumeAtual+=5;
+            for(int i=0; i<16; i++){
+                try { 
+                    mudancaVolume.setMessage(ShortMessage.CONTROL_CHANGE, i, 7, volumeAtual);
+                    receptor.send(mudancaVolume, -1);
+                } catch (InvalidMidiDataException e1) {}
+            }
+            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
+            if(volumeAtual == 127){
+                botaoMais.setEnabled(false);
+            }
+            if(volumeAtual > 0){
+                botaoMenos.setEnabled(true);
+            }
+        }
+    }
+
+    public void retroceder(){
+
+        long novaPosicao = 0;
+
+        novaPosicao = sequenciador.getMicrosecondPosition();
+        if (novaPosicao >= 1000000) {
+            novaPosicao -= 1000000;   
+            sequenciador.setMicrosecondPosition(novaPosicao);
+        }
+    }
+
+    public void avancar(){
+
+        long novaPosicao = 0;
+        long duracao     = 0;
+
+        novaPosicao = sequenciador.getMicrosecondPosition();
+        duracao  = sequenciador.getMicrosecondLength();
+
+        if (novaPosicao <= duracao) {
+            novaPosicao += 1000000;   
+            sequenciador.setMicrosecondPosition(novaPosicao);
+        }  
+    }
     
     public String formataInstante(double t1){
         String inicio    = "";
@@ -743,29 +788,29 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         String ss1="";
 
         if     (h1 ==0) sh1 = "00";
-        else if(h1 <10) sh1 = "0"+reformata(h1, 0);
-        else if(h1<100) sh1 = "" +reformata(h1, 0);
-        else            sh1 = "" +reformata(h1, 0);
+        else if(h1 <10) sh1 = "0"+reformata(h1);
+        else if(h1<100) sh1 = "" +reformata(h1);
+        else            sh1 = "" +reformata(h1);
 
         if     (m1 ==0) sm1 = "00";
-        else if(m1 <10) sm1= "0"+reformata(m1, 0);
-        else if(m1 <60) sm1 = ""+reformata(m1, 0);
+        else if(m1 <10) sm1= "0"+reformata(m1);
+        else if(m1 <60) sm1 = ""+reformata(m1);
 
         if     (s1 ==0) ss1 = "00";
-        else if(s1 <10) ss1 = "0"+reformata(s1r, 2);
-        else if(s1 <60) ss1 = reformata(s1r, 2);
+        else if(s1 <10) ss1 = "0"+reformata(s1r);
+        else if(s1 <60) ss1 = reformata(s1r);
 
         return inicio = sh1 + ":" + sm1 + ":" + ss1;
     }
 
-    public String reformata(double x, int casas){ 
+    public String reformata(double x){
         DecimalFormat df = new DecimalFormat() ;
         df.setGroupingUsed(false);
-        df.setMaximumFractionDigits(casas);
+        df.setMaximumFractionDigits(0);
         return df.format(x);
     }
 
-    void retardo(int miliseg){  
+    void retardo(int miliseg){
         try { 
             Thread.sleep(miliseg);
         } catch(InterruptedException e) { }
