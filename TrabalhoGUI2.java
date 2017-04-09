@@ -9,16 +9,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.BorderLayout;
 
 import javax.swing.*;
 import javax.swing.JFileChooser;
 import javax.swing.JSlider;
 import javax.swing.JProgressBar;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.BoxLayout;
+import javax.swing.Box;
 import javax.swing.GroupLayout;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -42,10 +46,23 @@ import java.text.DecimalFormat;
 import java.io.File;
 import java.io.IOException;
 
+import java.lang.Math;
+
 import javax.imageio.ImageIO;
 
 public class TrabalhoGUI2 extends JFrame implements Runnable {
 	
+    JFrame frame = new JFrame("Primeiro Tocador");
+
+    PanelPersonalizado panelConteudo = new PanelPersonalizado();
+    GroupLayout layout = new GroupLayout(panelConteudo);
+
+    JPanel panelTopo      = new JPanel();
+    JPanel panelCentro    = new JPanel();
+    JPanel panelProgresso = new JPanel();
+    JPanel panelArquivos  = new JPanel();
+    JPanel panelRodape    = new JPanel();
+
     BufferedImage backgroundPanel;
     
     ImageIcon playIcon         = new ImageIcon("img/playnormal.png");
@@ -63,16 +80,16 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 	ImageIcon frameIcon        = new ImageIcon("img/frameicon.png");
 	
 	Color corFundo  = new Color(5, 5, 5);
-	Color corTexto  = new Color(220, 222, 224);
+	Color corTexto  = new Color(230, 232, 234);
 	Color corTexto2 = new Color(142, 145, 151);
 	Color corAzul   = new Color(40, 102, 213);
 
-	Font arial       = new Font("Gill Sans", java.awt.Font.PLAIN, 25);
-	Font arialNarrow = new Font("Arial Narrow", java.awt.Font.ITALIC, 18);
+	Font font1 = new Font("Gill Sans", java.awt.Font.PLAIN, 25);
+	Font font2 = new Font("Arial Narrow", java.awt.Font.ITALIC, 18);
 
     JLabel nomeArquivo   = new JLabel("Titulo do Arquivo MIDI");
     JLabel nomeArquivo2  = new JLabel("Orquestra Padrao");
-    JLabel volumeLabel       = new JLabel("", SwingConstants.CENTER);
+    JLabel volumeLabel   = new JLabel("", SwingConstants.CENTER);
     JLabel tempoTotal    = new JLabel("00:00:00");
     JLabel tempoCorrente = new JLabel("00:00:00");
 
@@ -85,6 +102,9 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     JButton botaoMais     = new JButton(maisIcon);
     JButton botaoAbrir    = new JButton("Abrir");
     JButton botaoAbrir2   = new JButton("Abrir");
+    JButton botaoInfo     = new JButton("Info");
+    JButton botaoParam    = new JButton("Parametros");
+    JButton botaoEventos  = new JButton("Eventos");
     JButton botaoFantasma = new JButton();
 
     JProgressBar progresso = new JProgressBar(0);
@@ -92,12 +112,15 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     JTextField caminhoTextField = new JTextField("  Escolha um arquivo MIDI...");    
     JTextField caminhoTextField2 = new JTextField("  Escolha um arquivo SF2...");
 
+    final JDialog dialog = new JDialog(frame, "Informacoes MIDI");
+
     ShortMessage mudancaVolume = new ShortMessage();
     
 
     static Soundbank   bancoDefault;      
     static Soundbank   bancoSelecionado;
-    private Sequence   sequencia;  
+    private Sequence   sequencia;
+    private Sequence   sequenciaNova;
     private Sequencer  sequenciador = null;
     static Synthesizer sintetizador = null;
     private Receiver   receptor     = null;
@@ -134,16 +157,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     // Metodo que apresenta a interface grafica na tela
     //-------------------------------------------------
     public void displayGUI(){
-    	    	
-    	JFrame frame = new JFrame("Primeiro Tocador");
-
-    	PanelPersonalizado panelConteudo = new PanelPersonalizado();
-    	GroupLayout layout = new GroupLayout(panelConteudo);
-
-    	JPanel panelTopo = new JPanel();
-        JPanel panelCentro = new JPanel();
-        JPanel panelProgresso = new JPanel();
-        JPanel panelRodape = new JPanel();
          
         //---------------------
         // Painel Topo Esquerdo 
@@ -153,11 +166,11 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 
         nomeArquivo.setForeground(corTexto);
         nomeArquivo.setPreferredSize(new Dimension (300, 25));
-        nomeArquivo.setFont(arial);
+        nomeArquivo.setFont(font1);
 
         nomeArquivo2.setForeground(corTexto2);
         nomeArquivo2.setPreferredSize(new Dimension (300, 20));
-        nomeArquivo2.setFont(arialNarrow);
+        nomeArquivo2.setFont(font2);
 
         panelTopo.add(nomeArquivo);
         panelTopo.add(nomeArquivo2);
@@ -302,12 +315,12 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         panelProgresso.add(progresso);
         panelProgresso.add(tempoTotal);
         
-        //--------------
-        // Painel Rodape
-        //--------------
-        panelRodape.setPreferredSize(new Dimension (400, 80));
-        panelRodape.setOpaque(false);
-        
+        //----------------
+        // Painel Arquivos
+        //----------------
+        panelArquivos.setPreferredSize(new Dimension (400, 80));
+        panelArquivos.setOpaque(false);
+
         caminhoTextField.setEditable(false);
         caminhoTextField.setBackground(corFundo);
         caminhoTextField.setForeground(corTexto);
@@ -337,13 +350,55 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         botaoAbrir2.setForeground(corTexto);
         botaoAbrir2.setFocusable(false);
         botaoAbrir2.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        panelArquivos.add(caminhoTextField); 
+        panelArquivos.add(botaoAbrir);      
+        panelArquivos.add(caminhoTextField2); 
+        panelArquivos.add(botaoAbrir2);
+
+        panelArquivos.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
+
+        //--------------
+        // Painel Rodape
+        //--------------
+        panelRodape.setPreferredSize(new Dimension (400, 50));
+        panelRodape.setOpaque(false);
+
+        botaoInfo.setContentAreaFilled(false);
+        botaoInfo.setPreferredSize(new Dimension(55, 25));
+        botaoInfo.setBorder(BorderFactory.createEmptyBorder());
+        botaoInfo.setOpaque(true);
+        botaoInfo.setBackground(corAzul);
+        botaoInfo.setForeground(corTexto);
+        botaoInfo.setFocusable(false);
+        botaoInfo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botaoInfo.setToolTipText("Visualizar informacoes do conteudo MIDI");
+
+        botaoParam.setContentAreaFilled(false);
+        botaoParam.setPreferredSize(new Dimension(100, 25));
+        botaoParam.setBorder(BorderFactory.createEmptyBorder());
+        botaoParam.setOpaque(true);
+        botaoParam.setBackground(corAzul);
+        botaoParam.setForeground(corTexto);
+        botaoParam.setFocusable(false);
+        botaoParam.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botaoParam.setToolTipText("Visualizar parametros de partitura");
+            
+        botaoEventos.setContentAreaFilled(false);
+        botaoEventos.setPreferredSize(new Dimension(65, 25));
+        botaoEventos.setBorder(BorderFactory.createEmptyBorder());
+        botaoEventos.setOpaque(true);
+        botaoEventos.setBackground(corAzul);
+        botaoEventos.setForeground(corTexto);
+        botaoEventos.setFocusable(false);
+        botaoEventos.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botaoEventos.setToolTipText("Visualizar eventos MIDI");
         
-        panelRodape.add(caminhoTextField); 
-        panelRodape.add(botaoAbrir);      
-        panelRodape.add(caminhoTextField2); 
-        panelRodape.add(botaoAbrir2);
+        panelRodape.add(botaoInfo);
+        panelRodape.add(botaoParam);
+        panelRodape.add(botaoEventos);
         
-        panelRodape.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        panelRodape.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
           
         //---------
         // Layout
@@ -352,6 +407,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         		.addComponent(panelTopo)
                 .addComponent(panelCentro)
                 .addComponent(panelProgresso)
+                .addComponent(panelArquivos)
                 .addComponent(panelRodape)
         );
         
@@ -359,14 +415,13 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         // Settings do Frame
         //------------------
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setPreferredSize(new Dimension (450, 350));
+        frame.setPreferredSize(new Dimension (450, 400));
         frame.setResizable(false);
         frame.setContentPane(panelConteudo);
         frame.setIconImage(frameIcon.getImage());
         frame.paintComponents(this.getGraphics());
         frame.pack();
         frame.setVisible(true);
-
     }
  
     //-------------------------------------------------
@@ -385,10 +440,24 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             botaoMais.setEnabled(false); 
             botaoAbrir.setEnabled(true);
 
+            botaoAbrir2.setEnabled(false);
+            botaoAbrir2.setBackground(corTexto);
+            botaoInfo.setEnabled(false);
+            botaoInfo.setBackground(corTexto);
+            botaoParam.setEnabled(false);
+            botaoParam.setBackground(corTexto);
+            botaoEventos.setEnabled(false);
+            botaoEventos.setBackground(corTexto);
+
             volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
 
             botaoAbrir.addActionListener(new ActionListener(){ 
                 public void actionPerformed(ActionEvent e){ 
+                    if (dialog.isVisible()) {
+                        dialog.setVisible(false);
+                        dialog.dispose();    
+                    }
+                    
                     abrirMIDI();
                 }
             }); 
@@ -397,7 +466,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                 public void actionPerformed(ActionEvent e){ 
                     abrirSF2();
                 }
-            }); 
+            });
 
             botaoPlay.addActionListener(new ActionListener(){ 
                 public void actionPerformed(ActionEvent e){ 
@@ -453,11 +522,17 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             botaoMais.addMouseListener(new MouseAdapter(){
                 public void mousePressed(MouseEvent evt) {
                     if(evt.getClickCount() >= 2){
-                        aumentaVolume(0);
+                        aumentaVolume(1);
                         
                     }
                 }
             }); 
+
+            botaoInfo.addActionListener(new ActionListener(){ 
+                public void actionPerformed(ActionEvent e){ 
+                    mostraInfo(frame);
+                }
+            });
 
         } catch(Exception e){
             System.out.println(e.getMessage());
@@ -500,17 +575,21 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                 sequenciador = null;
             }
               
-            Sequence sequeciaNova = MidiSystem.getSequence(arqSeqNovo);           
-            double duracao = sequeciaNova.getMicrosecondLength()/1000000.0d;
+            sequenciaNova = MidiSystem.getSequence(arqSeqNovo);           
+            double duracao = sequenciaNova.getMicrosecondLength()/1000000.0d;
 
             nomeArquivo.setText(arqSeqNovo.getName());                
             tempoTotal.setText(formataInstante(duracao));  
     
             botaoPlay.setEnabled(true);
-            botaoStop.setEnabled(false);
-            botaoFoward.setEnabled(false); 
-            botaoMenos.setEnabled(false); 
-            botaoMais.setEnabled(false);
+            botaoAbrir2.setEnabled(true);
+            botaoAbrir2.setBackground(corAzul);
+            botaoInfo.setEnabled(true);
+            botaoInfo.setBackground(corAzul);
+            botaoParam.setEnabled(true);
+            botaoParam.setBackground(corAzul);
+            botaoEventos.setEnabled(true);
+            botaoEventos.setBackground(corAzul);
 
         }catch (Throwable e1) { 
             System.out.println("Erro em carregaArquivoMidi: "+ e1.toString());
@@ -539,35 +618,19 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         arqSF2.showOpenDialog(this);  
         caminhoSF2 = arqSF2.getSelectedFile().toString();
         caminhoTextField2.setText(caminhoSF2);
-
-        File arqSeqNovo = arqSF2.getSelectedFile();
+        nomeArquivo2.setText(arqSF2.getSelectedFile().getName());  
 
         try { 
-            if(sequenciador!=null && sequenciador.isRunning()){ 
-                sequenciador.stop();
-                sequenciador.close();
-                sequenciador = null;
-            }
-              
-            Sequence sequeciaNova = MidiSystem.getSequence(arqSeqNovo);           
-            double duracao = sequeciaNova.getMicrosecondLength()/1000000.0d;
-            carregarBanco(caminhoSF2); 
-
-            nomeArquivo2.setText(arqSeqNovo.getName());                
-            tempoTotal.setText(formataInstante(duracao));                   
-              
-            botaoPlay.setEnabled(true);
-            botaoStop.setEnabled(false);
-            botaoFoward.setEnabled(false); 
-            botaoMenos.setEnabled(false); 
-            botaoMais.setEnabled(false);
+                              
+            carregarBanco(caminhoSF2);              
 
         }catch (Throwable e1) { 
-            System.out.println("Erro em carregaArquivoMidi: "+ e1.toString());
+            System.out.println("Erro em carregaArquivoSF2: "+ e1.toString());
         }
     }
 
     public void carregarBanco(String caminhoSF2) {
+        
         try { 
             sintetizador = MidiSystem.getSynthesizer();
             sintetizador.open();
@@ -664,6 +727,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         botaoPause.setEnabled(false);
         botaoStop.setEnabled(false);  
         botaoBackward.setEnabled(false);
+        botaoBackward.setEnabled(true);
         botaoAbrir.setEnabled(true);
         botaoAbrir.setBackground(corAzul);
         botaoAbrir2.setEnabled(true);
@@ -683,7 +747,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     receptor.send(mudancaVolume, -1);
                 } catch (InvalidMidiDataException e1) {}
             }
-            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
             if(volumeAtual == 0){
                 botaoMenos.setEnabled(false);
             }
@@ -700,7 +763,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     receptor.send(mudancaVolume, -1);
                 } catch (InvalidMidiDataException e1) {}
             }
-            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
             if(volumeAtual == 0){
                 botaoMenos.setEnabled(false);
             }
@@ -708,6 +770,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                 botaoMais.setEnabled(true);   
             }
         }
+        volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
     }
 
     public void aumentaVolume(int duploClique){
@@ -720,7 +783,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     receptor.send(mudancaVolume, -1);
                 } catch (InvalidMidiDataException e1) {}
             }
-            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
             if(volumeAtual == 127){
                 botaoMais.setEnabled(false);
             }
@@ -736,7 +798,6 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     receptor.send(mudancaVolume, -1);
                 } catch (InvalidMidiDataException e1) {}
             }
-            volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
             if(volumeAtual == 127){
                 botaoMais.setEnabled(false);
             }
@@ -744,6 +805,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                 botaoMenos.setEnabled(true);
             }
         }
+        volumeLabel.setText("" + ((volumeAtual*100)/127) + "");
     }
 
     public void retroceder(){
@@ -770,7 +832,90 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             sequenciador.setMicrosecondPosition(novaPosicao);
         }  
     }
-    
+
+    public void mostraInfo(JFrame frame){
+
+        long duracao      = sequenciaNova.getMicrosecondLength() / 1000000;
+        int resolucao     = sequenciaNova.getResolution();
+        long totalTitques = sequenciaNova.getTickLength();
+
+        float duracaoTique    = (float) duracao / totalTitques;
+        float duracaoSeminima = duracaoTique * resolucao;
+        float bpm             = 60 / duracaoSeminima;
+        int totalSeminimas    = (int) (duracao / duracaoSeminima);
+
+        JLabel  nome = new JLabel(nomeArquivo.getText());
+        nome.setFont(font1);
+        nome.setForeground(corTexto);
+
+        JLabel informacoes = new JLabel(
+            "<html><table border='0'>"
+                + "<tr><td> Resolucao:           </td><td></td><td align='right'>" + resolucao       + "</td></tr><br>"
+                + "<tr><td> Duracao:             </td><td></td><td align='right'>" + duracao         + "</td></tr><br>"
+                + "<tr><td> Numero de Tiques:    </td><td></td><td align='right'>" + totalTitques    + "</td></tr><br>"
+                + "<tr><td> Duracao do Tique:    </td><td></td><td align='right'>" + duracaoTique    + "</td></tr><br>"
+                + "<tr><td> Duracao da Seminima: </td><td></td><td align='right'>" + duracaoSeminima + "</td></tr><br>"
+                + "<tr><td> Total de Seminimas:  </td><td></td><td align='right'>" + totalSeminimas  + "</td></tr><br>"
+                + "<tr><td> Andamento:           </td><td></td><td align='right'>" + Math.round(bpm) + "</td></tr><br>"
+            + "</table></html>"
+        );
+        informacoes.setForeground(corTexto);
+
+        JButton closeButton = new JButton("Fechar");
+        closeButton.setContentAreaFilled(false);
+        closeButton.setPreferredSize(new Dimension(65, 25));
+        closeButton.setBorder(BorderFactory.createEmptyBorder());
+        closeButton.setOpaque(true);
+        closeButton.setBackground(corAzul);
+        closeButton.setForeground(corTexto);
+        closeButton.setFocusable(false);
+        closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        closeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                dialog.setVisible(false);
+                dialog.dispose();
+            }
+        });
+
+        PanelPersonalizado contentPanel = new PanelPersonalizado();
+       // contentPanel.setPreferredSize(new Dimension (350, 300));
+        contentPanel.setOpaque(false);
+        
+        JPanel nomePanel = new JPanel();
+        nomePanel.setPreferredSize(new Dimension (350, 40));
+        nomePanel.setOpaque(false);
+        nomePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+        JPanel infoPanel = new JPanel();
+        infoPanel.setPreferredSize(new Dimension (350, 180));
+        infoPanel.setOpaque(false);
+        
+        JPanel rodapePanel = new JPanel();
+        rodapePanel.setPreferredSize(new Dimension (300, 40));
+        rodapePanel.setOpaque(false);      
+
+        nomePanel.add(nome);
+        infoPanel.add(informacoes);
+        rodapePanel.add(closeButton);
+        
+        contentPanel.add(nomePanel);
+        contentPanel.add(infoPanel);
+        contentPanel.add(rodapePanel);
+        contentPanel.setOpaque(true);
+        
+        dialog.setContentPane(contentPanel);
+
+        //Show it.
+        dialog.setSize(new Dimension(400, 320));
+        dialog.setIconImage(frameIcon.getImage());
+        dialog.setResizable(false);
+        dialog.setLocation(450, 0);
+        dialog.setVisible(true);
+    }
+
+    //-------------------
+    // Metodos Auxiliares
     public String formataInstante(double t1){
         String inicio    = "";
 
@@ -815,6 +960,8 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             Thread.sleep(miliseg);
         } catch(InterruptedException e) { }
     }
+    // Metodos Auxiliares
+    //-------------------
 
     public void run(){ 
         
