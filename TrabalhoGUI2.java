@@ -50,6 +50,10 @@ import java.lang.Math;
 
 import javax.imageio.ImageIO;
 
+import java.util.List;
+import javax.sound.midi.MidiEvent;
+import java.util.LinkedList;
+
 public class TrabalhoGUI2 extends JFrame implements Runnable {
 	
     JFrame frame = new JFrame("Primeiro Tocador");
@@ -1021,4 +1025,41 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         //     }
         // });
     }
+	class EventoMidi{
+		public long tique;
+		public int trilha;
+		public String mensagem;
+		public EventoMidi(long tique, int trilha, String mensagem){
+			this.tique=tique;
+			this.trilha=trilha;
+			this.mensagem=mensagem;
+		}
+	}
+	public List<EventoMidi> obterEventos()	{
+		Track[] trilhas = sequencia.getTracks();
+		List<EventoMidi> listaDeEventos= new LinkedList<EventoMidi>();
+
+		for(int i=0; i<trilhas.length; i++){
+			Track trilha =	trilhas[i];
+			for(int j=0; j<trilha.size(); j++){
+				MidiEvent e = trilha.get(j);
+				MidiMessage mensagem = e.getMessage();
+				long tique = e.getTick();
+			
+				int n = mensagem.getStatus();
+			
+				String nomecomando = ""+n;
+			
+				switch(n)
+				{
+					case 128: nomecomando = "noteON"; break;
+					case 144: nomecomando = "noteOFF"; break;
+					case 255: nomecomando = "MetaMensagem	(a ser decodificada)"; break; 
+					//---(introduzir outros casos)
+				}
+				listaDeEventos.add(new EventoMidi(tique, i, nomecomando));
+			}
+		}
+		return listaDeEventos;
+	}
 }
