@@ -109,6 +109,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     JButton botaoInfo     = new JButton("Info");
     JButton botaoParam    = new JButton("Parametros");
     JButton botaoEventos  = new JButton("Eventos");
+	JButton botaoPadrao   = new JButton("Utilizar orquesta padrao");
     JButton botaoFantasma = new JButton();
 
     JProgressBar progresso = new JProgressBar(0);
@@ -175,9 +176,18 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         nomeArquivo2.setForeground(corTexto2);
         nomeArquivo2.setPreferredSize(new Dimension (300, 20));
         nomeArquivo2.setFont(font2);
+		
+		botaoPadrao.setPreferredSize(new Dimension(140, 15));
+		botaoPadrao.setBorder(BorderFactory.createEmptyBorder());
+		botaoPadrao.setOpaque(true);
+		botaoPadrao.setBackground(corAzul);
+		botaoPadrao.setForeground(corTexto);
+		botaoPadrao.setFocusable(false);
+		botaoPadrao.setVisible(false);
 
         panelTopo.add(nomeArquivo);
         panelTopo.add(nomeArquivo2);
+		panelTopo.add(botaoPadrao);
         
         panelTopo.setLayout(new FlowLayout(FlowLayout.LEFT));
 
@@ -353,7 +363,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         botaoAbrir2.setBackground(corAzul);
         botaoAbrir2.setForeground(corTexto);
         botaoAbrir2.setFocusable(false);
-        botaoAbrir2.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botaoAbrir2.setCursor(new Cursor(Cursor.HAND_CURSOR));		
 
         panelArquivos.add(caminhoTextField); 
         panelArquivos.add(botaoAbrir);      
@@ -537,6 +547,12 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
                     mostraInfo(frame);
                 }
             });
+			
+	        botaoPadrao.addActionListener(new ActionListener(){ 
+                public void actionPerformed(ActionEvent e){ 
+                    carregaPadrao();
+                }
+            });
 
         } catch(Exception e){
             System.out.println(e.getMessage());
@@ -594,10 +610,18 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             botaoParam.setBackground(corAzul);
             botaoEventos.setEnabled(true);
             botaoEventos.setBackground(corAzul);
+			
+			File arquivoMIDI = new File(nomeArquivo.getText());
+            sequencia    = MidiSystem.getSequence(arquivoMIDI);  
+            sequenciador = MidiSystem.getSequencer();  
 
-        }catch (Throwable e1) { 
-            System.out.println("Erro em carregaArquivoMidi: "+ e1.toString());
+            sequenciador.setSequence(sequencia); 
+            sequenciador.open();  
+
         }
+		catch(InvalidMidiDataException e2) { System.out.println(e2+" : Erro nos dados midi.");}
+        catch(IOException              e3) { System.out.println(e3+" : O arquivo midi nao foi encontrado.");}
+		catch(Throwable e1) { System.out.println("Erro ao carregar arquivo Midi: "+ e1.toString()); }
     }
 
     public void abrirSF2(){
@@ -625,7 +649,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         nomeArquivo2.setText(arqSF2.getSelectedFile().getName());  
 
         try { 
-                              
+			
             carregarBanco(caminhoSF2);              
 
         }catch (Throwable e1) { 
@@ -634,7 +658,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     }
 
     public void carregarBanco(String caminhoSF2) {
-        
+		
         try { 
             sintetizador = MidiSystem.getSynthesizer();
             sintetizador.open();
@@ -642,35 +666,30 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             System.out.println("Erro em MidiSystem.getSynthesizer(): " + e);                                  
             return; 
         }
-                    
+		
         bancoDefault = sintetizador.getDefaultSoundbank();
         if(bancoDefault != null){ 
             sintetizador.unloadAllInstruments(bancoDefault);          
         }         
         
         File arquivoSF2 = new File(caminhoSF2);
+		
 
         try { 
             bancoSelecionado = MidiSystem.getSoundbank(arquivoSF2); 
         } catch (Exception e) { e.printStackTrace(); }
 
         sintetizador.loadAllInstruments(bancoSelecionado);
-
+		
         try{ 
             sequenciador.getTransmitter().setReceiver(sintetizador.getReceiver());
-        }catch (Exception e) { System.out.println("Erro no carregamento do banco: "+ e); }              
+			botaoPadrao.setVisible(true);
+        }catch (Exception e) { System.out.println("Erro no carregamento do banco: "+ e); }
     }
 
     public void tocar(String caminho, long inicio) {
         try {  
             
-            File arquivoMIDI = new File(caminho);
-            sequencia    = MidiSystem.getSequence(arquivoMIDI);  
-            sequenciador = MidiSystem.getSequencer();  
-
-            sequenciador.setSequence(sequencia); 
-            sequenciador.open();  
-            retardo(300);
             sequenciador.start();  
             
             receptor = sequenciador.getTransmitters().iterator().next().getReceiver();
@@ -702,11 +721,11 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             botaoFoward.setEnabled(true);
             botaoMenos.setEnabled(true);
             botaoMais.setEnabled(true);
+			botaoPadrao.setEnabled(false);
+			botaoPadrao.setBackground(corTexto);
             
         }
         catch(MidiUnavailableException e1) { System.out.println(e1+" : Dispositivo midi nao disponivel.");}
-        catch(InvalidMidiDataException e2) { System.out.println(e2+" : Erro nos dados midi.");}
-        catch(IOException              e3) { System.out.println(e3+" : O arquivo midi nao foi encontrado.");}
         catch(Exception e)                 { System.out.println(e.toString());}   
     }
 
@@ -722,9 +741,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
     public void parar(){
 
         soando = false;
-        sequenciador.stop();  
-        sequenciador.close();
-        sequenciador = null;
+        sequenciador.stop();
         inicioAudio = 0L;
         
         botaoPlay.setEnabled(true);
@@ -736,6 +753,8 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
         botaoAbrir.setBackground(corAzul);
         botaoAbrir2.setEnabled(true);
         botaoAbrir2.setBackground(corAzul);
+		botaoPadrao.setEnabled(true);
+		botaoPadrao.setBackground(corAzul);
         
         progresso.setValue(0);             
         tempoCorrente.setText(formataInstante(0));      
@@ -835,6 +854,23 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
             novaPosicao += 1000000;   
             sequenciador.setMicrosecondPosition(novaPosicao);
         }  
+    }
+	
+	public void carregaPadrao(){
+		
+        bancoDefault = sintetizador.getDefaultSoundbank();
+        if(bancoDefault != null){ 
+			sintetizador.unloadAllInstruments(bancoSelecionado);
+            sintetizador.loadAllInstruments(bancoDefault);
+        }         
+		
+        try{ 
+            sequenciador.getTransmitter().setReceiver(sintetizador.getReceiver());
+			botaoPadrao.setVisible(false);
+			nomeArquivo2.setText("Orquesta Padrao");
+			caminhoTextField2.setText("  Escolha um arquivo SF2...");
+        }catch (Exception e) { System.out.println("Erro no carregamento do banco: "+ e); }
+        
     }
 
     public void mostraInfo(JFrame frame){
