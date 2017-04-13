@@ -1090,12 +1090,126 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 				{
 					case 128: nomecomando = "noteON"; break;
 					case 144: nomecomando = "noteOFF"; break;
-					case 255: nomecomando = "MetaMensagem	(a ser decodificada)"; break; 
+					case 255:
+					{
+						nomecomando = "MetaMensagem:";
+						switch(mensagem.getMessage()[1])
+						{
+							case 0:
+							{
+								if(2 == mensagem.getMessage()[1])
+								{
+									nomecomando+= " Número de sequência "+ mensagem.getMessage()[2]+mensagem.getMessage()[3];
+								}
+								break;
+							}
+							case 1:
+							{
+								nomecomando+= " Texto de tamanho: "+ mensagem.getMessage()[2]+ "\t Texto: ";
+								for(int k=0; k < mensagem.getMessage()[2]; k++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[k+3];
+								}
+								break;
+							}
+							case 2:
+							{
+								nomecomando+= " Mensagem de copyright, tamanho: "+ mensagem.getMessage()[2]+ "\t Texto: ";
+								for(int l=0; l < mensagem.getMessage()[2]; l++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[l+3];
+								}
+								break;
+							}
+							case 3:
+							{
+								nomecomando+= " Nome da sequência/trilha, tamanho "+ mensagem.getMessage()[2]+ "\t Nome: ";
+								for(int m=0; m < mensagem.getMessage()[2]; m++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[m+3];
+								}
+								break;
+							}
+							case 4:
+							{
+								nomecomando+= " Nome do instrumento, tamanho: "+ mensagem.getMessage()[2]+ "\t Nome: ";
+								for(int r=0; r < mensagem.getMessage()[2]; r++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[r+3];
+								}
+								break;
+							}
+							case 5:
+							{
+								nomecomando+= " Letra da música, tamanho: "+ mensagem.getMessage()[2]+ "\t Letra: ";
+								for(int o=0; o < mensagem.getMessage()[2]; o++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[o+3];
+								}
+								break;
+							}
+							case 6:
+							{
+								nomecomando+= " Marcador, tamanho: "+ mensagem.getMessage()[2]+ "\t Marcador: ";
+								for(int p=0; p < mensagem.getMessage()[2]; p++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[p+3];
+								}
+								break;
+							}
+							case 7:
+							{
+								nomecomando+= " Ponto de indicação(cue point), tamanho: "+ mensagem.getMessage()[2]+ "\t Ponto de indicação: ";
+								for(int q=0; q < mensagem.getMessage()[2]; q++)
+								{
+									nomecomando+= (char) mensagem.getMessage()[q+3];
+								}
+								break;
+							}
+							case 0x2F:
+							{
+								nomecomando+= "Fim da Trilha.";
+								break;
+							}
+							default:
+								nomecomando = "MetaMensagem." + n;
+						}
+						break; 
+					}
 					//---(introduzir outros casos)
 				}
 				listaDeEventos.add(new EventoMidi(tique, i, nomecomando));
 			}
 		}
 		return listaDeEventos;
+	}
+	public Object[][] obterMatrizDeEventosMidi(){
+		List<EventoMidi> lista= obterEventos();
+//Caso queira a transposta disso comente essa parte e descomente a de baixo
+/*
+		Object[][] data= new []Object[3];
+		data[0]= new Long[lista.size()];
+		data[1]= new int[lista.size()];
+		data[1]= new String[lista.size()];
+		for(int i=0;i < lista.size(); i++)
+		{
+			data[0][i]= lista[i].tique;
+			data[1][i]= lista[i].trilha;
+			data[2][i]= lista[i].mensagem;
+		}
+*/
+//Caso queira a transposta disso comente essa parte e descomente a de cima
+///*
+		Object[][] data= new Object[lista.size()][];
+		for(int i=0;i < lista.size(); i++){
+			data[i]= new Object[3];
+		}
+		for(int i=0;i < lista.size(); i++){
+			data[i][0]= lista.get(i).tique;
+			data[i][1]= lista.get(i).trilha;
+			data[i][2]= lista.get(i).mensagem;
+		}
+//*/
+	return data;
 	}
 }
