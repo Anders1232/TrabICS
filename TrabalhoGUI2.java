@@ -1213,6 +1213,7 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 		return data;
 	}
 	public JTable obterTabelaDeEventos(){
-		return new JTable(obterMatrizDeEventosMidi, { "tique", "triha", "mensagem" });
+		Object nomeDasColunas[]=  { "tique", "triha", "mensagem" }; 
+		return new JTable(obterMatrizDeEventosMidi(),nomeDasColunas);
 	}
 }
