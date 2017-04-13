@@ -1210,6 +1210,9 @@ public class TrabalhoGUI2 extends JFrame implements Runnable {
 			data[i][2]= lista.get(i).mensagem;
 		}
 //*/
-	return data;
+		return data;
+	}
+	public JTable obterTabelaDeEventos(){
+		return new JTable(obterMatrizDeEventosMidi, { "tique", "triha", "mensagem" });
 	}
 }
